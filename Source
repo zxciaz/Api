@@ -1,0 +1,92 @@
+local Service = setmetatable({}, {
+    ["__index"] = function(self, ...)
+        return game:GetService(...)
+    end
+});
+
+local Prefix = "/e ";
+
+local Players, RStorage, RService, Uis, TPService, SGui = Service.Players, Service.ReplicatedStorage, Service.RunService, Service.UserInputService, Service.TeleportService, Service.StarterGui;
+local Client, Mouse, INew, CF, Vec3 = Players.LocalPlayer, Players.LocalPlayer:GetMouse(), Instance.new, CFrame.new, Vector3.new;
+local Commands, LoadingTime = {}, tick();
+
+function GetPlayer(Name)
+    local FoundPlayer = nil
+    local GP = Players:GetPlayers()
+    for _, FS in next, GP do 
+        if string.sub(string.lower(tostring(FS)), 1, #Name) == Name then
+            FoundPlayer = FS;return FS
+        end
+    end
+    if FoundPlayer and FoundPlayer ~= nil then 
+        return FoundPlayer
+    else 
+        return Notify("", "Player not found!", "", 3)
+    end
+end
+
+function Notify(title, text, icon, time)
+    SGui:SetCore("SendNotification", {
+        Title = title;
+        Text = text;
+        Icon = icon;
+        Duration = time;
+    }) 
+end
+
+function NewInstance(Type, Val)
+    local NewObject = INew(Type)
+    for _, v in next, Val do 
+        NewObject[_] = v 
+    end
+    if NewObject then 
+        return NewObject
+    else 
+        return Notify("Error", "Didnt work", "", 3)
+    end
+end
+
+function TFind(Table, Argument)
+    for _, v in next, Table do 
+        if v == Argument then 
+            return _ 
+        end
+    end
+end
+
+function AddCommand(Aliases, Description, Function)
+    Commands[#Commands + 1] = {
+        ["Aliases"] = Aliases;
+        ["Desc"] = Description;
+        ["Func"] = Function;
+    };
+end
+
+function ParseCommand(Table)
+    for _, v in next, Commands do 
+        if TFind(v.Aliases, Table) then 
+            return v.Func 
+        end
+    end
+end
+
+function RunCommand(Command)
+    pcall(function()
+        if string.sub(string.lower(Command), 1, #Prefix) == Prefix then 
+            local Args = string.split(string.sub(string.lower(Command), #Prefix + 1), " ")
+            local FoundCommand = ParseCommand(table.remove(Args, 1))
+            if FoundCommand and Args then 
+                return FoundCommand(Args)
+            end
+        end
+    end)
+end
+
+AddCommand({"print"}, "Prints Arguments to console", function(Args)
+    if Args[1] then 
+        print(table.concat(Args))
+    end
+end)
+
+Client.Chatted:Connect(RunCommand)
+Notify("Script", "Took "..string.sub(tostring(tick() - LoadingTime), 1, 7).." seconds to load", "", 3)
